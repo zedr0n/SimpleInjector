@@ -24,6 +24,7 @@ namespace SimpleInjector
 {
     using System;
     using System.Collections.Generic;
+    using System.Diagnostics;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
@@ -56,7 +57,12 @@ namespace SimpleInjector
             // unloaded). We might however relax this constraint and optimize the first N container instances.
             if (container.Options.EnableDynamicAssemblyCompilation)
             {
-                TryCompileInDynamicAssembly<TResult>(expression, ref compiledLambda);
+                // HACK: Prevent "JIT Compiler encountered an internal limitation" exception while running in 
+                // the debugger with VS2013 (See work item 20904).
+                if (!Debugger.IsAttached)
+                {
+                    TryCompileInDynamicAssembly<TResult>(expression, ref compiledLambda);
+                }
             }
 
             return compiledLambda ?? CompileLambda<TResult>(expression);
