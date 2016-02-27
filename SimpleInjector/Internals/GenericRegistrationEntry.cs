@@ -406,7 +406,7 @@ namespace SimpleInjector.Internals
 
             private Registration GetRegistration(PredicateContext context)
             {
-                Type key = context.ImplementationType;
+                Type key = context.ImplementationType.Item1;
 
                 Registration registration;
 
@@ -421,7 +421,7 @@ namespace SimpleInjector.Internals
             }
 
             private Registration CreateNewRegistrationFor(PredicateContext context) =>
-                this.lifestyle.CreateRegistration(context.ImplementationType, context.ImplementationType,
+                this.lifestyle.CreateRegistration(context.ImplementationType.Item1, context.ImplementationType.Item1,
                     this.container);
 
             private bool MatchesPredicate(PredicateContext context) =>

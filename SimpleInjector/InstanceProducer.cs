@@ -91,6 +91,40 @@ namespace SimpleInjector
         private static readonly Action[] NoVerifiers = Helpers.Array<Action>.Empty;
         private static readonly Predicate<PredicateContext> Always = context => true;
 
+        private class CombinePredicate
+        {
+            private readonly Predicate<PredicateContext> _predicate;
+            private readonly Func<PredicateContext, bool> _func;
+
+            public Predicate<PredicateContext> GetPredicate()
+            {
+                return context => _predicate.Invoke(context) && _func(context);
+            }
+
+            public CombinePredicate(Predicate<PredicateContext> predicate, Func<PredicateContext, bool> func)
+            {
+                _func = func;
+                _predicate = predicate ?? Always;
+            }
+        }
+
+        private bool CheckHashCode(PredicateContext context)
+        {
+            if (context.Consumer == null)
+                return true;
+
+            var target = context.Consumer.Target.Member;
+            var attributes = target?.GetCustomAttributes(true);
+            var hashCode = attributes?.Sum(attr => attr.GetHashCode());
+            HashCode = HashCode ?? hashCode;
+            return HashCode == hashCode;
+        }
+
+        /// <summary>
+        ///
+        /// </summary>
+        public int? HashCode { get; set; }
+
         private readonly object locker = new object();
         private readonly Lazy<Expression> lazyExpression;
         private readonly InitializationContext initializationContext;
@@ -111,6 +145,8 @@ namespace SimpleInjector
         {
             Requires.ServiceIsAssignableFromImplementation(serviceType, registration.ImplementationType,
                 nameof(serviceType));
+
+            Predicate = (new CombinePredicate(Predicate, CheckHashCode)).GetPredicate();
         }
 
         internal InstanceProducer(Type serviceType, Registration registration, Predicate<PredicateContext> predicate)

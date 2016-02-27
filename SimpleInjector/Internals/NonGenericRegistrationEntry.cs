@@ -231,7 +231,7 @@ namespace SimpleInjector.Internals
 
         private class ImplementationTypeFactoryInstanceProducerProvider : IProducerProvider
         {
-            private readonly Dictionary<Type, InstanceProducer> cache = new Dictionary<Type, InstanceProducer>();
+            private readonly Dictionary<Tuple<Type,int?>, InstanceProducer> cache = new Dictionary<Tuple<Type,int?>, InstanceProducer>();
             private readonly Func<TypeFactoryContext, Type> implementationTypeFactory;
             private readonly Lifestyle lifestyle;
             private readonly Predicate<PredicateContext> predicate;
@@ -317,7 +317,7 @@ namespace SimpleInjector.Internals
             private InstanceProducer CreateNewProducerFor(PredicateContext context) =>
                 new InstanceProducer(
                     this.serviceType,
-                    this.lifestyle.CreateRegistration(context.ServiceType, context.ImplementationType, 
+                    this.lifestyle.CreateRegistration(context.ServiceType, context.ImplementationType.Item1, 
                         this.container),
                     this.predicate);
         }
