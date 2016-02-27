@@ -20,6 +20,8 @@
 */
 #endregion
 
+using System.Linq;
+
 namespace SimpleInjector
 {
     using System;
@@ -75,7 +77,7 @@ namespace SimpleInjector
 
         /// <summary>Gets the closed generic implementation type that will be created by the container.</summary>
         /// <value>The implementation type.</value>
-        public Type ImplementationType
+        public Tuple<Type, int?> ImplementationType
         {
             get
             {
@@ -84,7 +86,9 @@ namespace SimpleInjector
                     this.implementationType = this.implementationTypeProvider();
                 }
 
-                return this.implementationType;
+                var hashCode = Consumer?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+
+                return new Tuple<Type, int?>(this.implementationType, hashCode);
             }
         }
 
@@ -106,7 +110,7 @@ namespace SimpleInjector
         internal string DebuggerDisplay => string.Format(CultureInfo.InvariantCulture,
             "{0}: {1}, {2}: {3}, {4}: {5}, {6}: {7}",
             nameof(ServiceType), this.ServiceType.ToFriendlyName(),
-            nameof(ImplementationType), this.ImplementationType.ToFriendlyName(),
+            nameof(ImplementationType), this.ImplementationType.Item1.ToFriendlyName(),
             nameof(Handled), this.Handled,
             nameof(Consumer), this.Consumer);
     }
