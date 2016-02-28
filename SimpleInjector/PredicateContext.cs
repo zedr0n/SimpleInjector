@@ -77,7 +77,7 @@ namespace SimpleInjector
 
         /// <summary>Gets the closed generic implementation type that will be created by the container.</summary>
         /// <value>The implementation type.</value>
-        public Tuple<Type, int?> ImplementationType
+        public Type ImplementationType
         {
             get
             {
@@ -86,9 +86,7 @@ namespace SimpleInjector
                     this.implementationType = this.implementationTypeProvider();
                 }
 
-                var hashCode = Consumer?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-
-                return new Tuple<Type, int?>(this.implementationType, hashCode);
+                return this.implementationType;
             }
         }
 
@@ -110,7 +108,7 @@ namespace SimpleInjector
         internal string DebuggerDisplay => string.Format(CultureInfo.InvariantCulture,
             "{0}: {1}, {2}: {3}, {4}: {5}, {6}: {7}",
             nameof(ServiceType), this.ServiceType.ToFriendlyName(),
-            nameof(ImplementationType), this.ImplementationType.Item1.ToFriendlyName(),
+            nameof(ImplementationType), this.ImplementationType.ToFriendlyName(),
             nameof(Handled), this.Handled,
             nameof(Consumer), this.Consumer);
     }

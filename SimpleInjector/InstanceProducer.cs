@@ -91,40 +91,6 @@ namespace SimpleInjector
         private static readonly Action[] NoVerifiers = Helpers.Array<Action>.Empty;
         private static readonly Predicate<PredicateContext> Always = context => true;
 
-        private class CombinePredicate
-        {
-            private readonly Predicate<PredicateContext> _predicate;
-            private readonly Func<PredicateContext, bool> _func;
-
-            public Predicate<PredicateContext> GetPredicate()
-            {
-                return context => _predicate.Invoke(context) && _func(context);
-            }
-
-            public CombinePredicate(Predicate<PredicateContext> predicate, Func<PredicateContext, bool> func)
-            {
-                _func = func;
-                _predicate = predicate ?? Always;
-            }
-        }
-
-        private bool CheckHashCode(PredicateContext context)
-        {
-            return true;
-            /*if (context.Consumer == null)
-                return true;
-
-            var hashCode = context.Consumer.Target.Member.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-            for (var consumer = context.Consumer.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
-            {
-                hashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-                hashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
-            }
-
-            HashCode = HashCode ?? hashCode;
-            return HashCode == hashCode;*/
-        }
-
         /// <summary>
         ///
         /// </summary>
@@ -150,8 +116,6 @@ namespace SimpleInjector
         {
             Requires.ServiceIsAssignableFromImplementation(serviceType, registration.ImplementationType,
                 nameof(serviceType));
-
-            Predicate = (new CombinePredicate(Predicate, CheckHashCode)).GetPredicate();
         }
 
         /// <summary>
@@ -165,8 +129,6 @@ namespace SimpleInjector
         {
             Requires.ServiceIsAssignableFromImplementation(serviceType, registration.ImplementationType,
                 nameof(serviceType));
-
-            Predicate = (new CombinePredicate(Predicate, CheckHashCode)).GetPredicate();
         }
 
         internal InstanceProducer(Type serviceType, Registration registration, Predicate<PredicateContext> predicate)

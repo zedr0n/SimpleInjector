@@ -36,14 +36,13 @@ namespace SimpleInjector.Internals
 
         public TargetTypeInfo(PredicateContext context)
         {
-            ImplementationType = context.ImplementationType.Item1;
-            HashCode = context.ImplementationType.Item2;
-            for (var consumer = context.Consumer; consumer != null; consumer = consumer.ParentInfo)
+            ImplementationType = context.ImplementationType;
+            HashCode = context.Consumer?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            for (var consumer = context.Consumer?.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
             {
                 HashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
                 HashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
             }
-            //ConsumerType = context.Consumer?.ImplementationType;
         }
 
         public TargetTypeInfo(PredicateContext context, Type serviceType)
@@ -82,13 +81,10 @@ namespace SimpleInjector.Internals
             var hashCode = 0;
 
             if(ImplementationType != null)
-                hashCode = ImplementationType.GetHashCode();
+                hashCode = ImplementationType.Name.GetHashCode();
 
             if (ServiceType != null)
-                hashCode ^= ServiceType.GetHashCode();
-
-            //if (ConsumerType != null)
-            //    hashCode ^= ConsumerType.GetHashCode();
+                hashCode ^= ServiceType.Name.GetHashCode();
 
             if (HashCode != null)
                 hashCode ^= (int)HashCode;
@@ -412,7 +408,7 @@ namespace SimpleInjector.Internals
             private InstanceProducer CreateNewProducerFor(PredicateContext context) =>
                 new InstanceProducer(
                     this.serviceType,
-                    this.lifestyle.CreateRegistration(context.ServiceType, context.ImplementationType.Item1, 
+                    this.lifestyle.CreateRegistration(context.ServiceType, context.ImplementationType, 
                         this.container),
                     this.predicate,
                     context.Consumer);
