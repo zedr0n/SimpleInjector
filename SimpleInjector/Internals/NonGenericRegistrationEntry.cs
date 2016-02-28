@@ -27,6 +27,75 @@ namespace SimpleInjector.Internals
     using System.Linq;
     using System.Reflection;
 
+    internal class TargetTypeInfo : IEquatable<TargetTypeInfo>
+    {
+        public Type ServiceType { get; }
+        public Type ImplementationType { get; set; }
+        public int? HashCode { get; }
+        //public Type ConsumerType { get; }
+
+        public TargetTypeInfo(PredicateContext context)
+        {
+            ImplementationType = context.ImplementationType.Item1;
+            HashCode = context.ImplementationType.Item2;
+            for (var consumer = context.Consumer; consumer != null; consumer = consumer.ParentInfo)
+            {
+                HashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+                HashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
+            }
+            //ConsumerType = context.Consumer?.ImplementationType;
+        }
+
+        public TargetTypeInfo(PredicateContext context, Type serviceType)
+            : this(context)
+        {
+            ServiceType = serviceType;
+        }
+
+        public TargetTypeInfo(Type implementationType,InjectionConsumerInfo consumerInfo)
+        {
+            ImplementationType = implementationType;
+            if (consumerInfo == null)
+                HashCode = implementationType.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            else
+            {
+                HashCode = consumerInfo.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+                for (var consumer = consumerInfo.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
+                {
+                    HashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+                    HashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
+                }
+                //HashCode = consumerInfo.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            }
+
+            //ConsumerType = consumerInfo?.ImplementationType;
+        }
+
+        public bool Equals(TargetTypeInfo other)
+        {
+            return ImplementationType == other.ImplementationType && HashCode == other.HashCode && ServiceType == other.ServiceType;
+            //ConsumerType == other.ConsumerType;
+        }
+
+        public override int GetHashCode()
+        {
+            var hashCode = 0;
+
+            if(ImplementationType != null)
+                hashCode = ImplementationType.GetHashCode();
+
+            if (ServiceType != null)
+                hashCode ^= ServiceType.GetHashCode();
+
+            //if (ConsumerType != null)
+            //    hashCode ^= ConsumerType.GetHashCode();
+
+            if (HashCode != null)
+                hashCode ^= (int)HashCode;
+
+            return hashCode;
+        }
+    }
     internal sealed class NonGenericRegistrationEntry : IRegistrationEntry
     {
         private readonly List<IProducerProvider> providers = new List<IProducerProvider>(1);
@@ -228,10 +297,10 @@ namespace SimpleInjector.Internals
                     ? this.producer
                     : null;
         }
-
         private class ImplementationTypeFactoryInstanceProducerProvider : IProducerProvider
         {
-            private readonly Dictionary<Tuple<Type,int?>, InstanceProducer> cache = new Dictionary<Tuple<Type,int?>, InstanceProducer>();
+            private readonly Dictionary<TargetTypeInfo, InstanceProducer> cache = new Dictionary<TargetTypeInfo, InstanceProducer>();
+            //private readonly Dictionary<Tuple<Type,int?>, InstanceProducer> cache = new Dictionary<Tuple<Type,int?>, InstanceProducer>();
             private readonly Func<TypeFactoryContext, Type> implementationTypeFactory;
             private readonly Lifestyle lifestyle;
             private readonly Predicate<PredicateContext> predicate;
@@ -304,10 +373,12 @@ namespace SimpleInjector.Internals
                 // Never build a producer twice. This could cause components with a torn lifestyle.
                 lock (this.cache)
                 {
+                    var targetInfo = new TargetTypeInfo(context);
+                    
                     // We need to cache on implementation, because service type is always the same.
-                    if (!this.cache.TryGetValue(context.ImplementationType, out producer))
+                    if (!this.cache.TryGetValue(targetInfo, out producer))
                     {
-                        this.cache[context.ImplementationType] = producer = this.CreateNewProducerFor(context);
+                        this.cache[targetInfo] = producer = this.CreateNewProducerFor(context);
                     }
                 }
 
@@ -319,7 +390,8 @@ namespace SimpleInjector.Internals
                     this.serviceType,
                     this.lifestyle.CreateRegistration(context.ServiceType, context.ImplementationType.Item1, 
                         this.container),
-                    this.predicate);
+                    this.predicate,
+                    context.Consumer);
         }
     }
 }

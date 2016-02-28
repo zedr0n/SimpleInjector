@@ -33,12 +33,13 @@ namespace SimpleInjector
     public class InjectionConsumerInfo
     {
         internal static readonly InjectionConsumerInfo Root = null;
-        
+
         /// <summary>Initializes a new instance of the <see cref="InjectionConsumerInfo"/> class.</summary>
         /// <param name="serviceType">The service type of the consumer of the component that should be created.</param>
         /// <param name="implementationType">The implementation type of the consumer of the component that should be created.</param>
         /// <param name="parameter">The constructor parameter for the created component.</param>
-        public InjectionConsumerInfo(Type serviceType, Type implementationType, ParameterInfo parameter)
+        /// <param name="parentInfo"></param>
+        public InjectionConsumerInfo(Type serviceType, Type implementationType, ParameterInfo parameter, InjectionConsumerInfo parentInfo = null)
             : this(serviceType, implementationType)
         {
             Requires.IsNotNull(serviceType, nameof(serviceType));
@@ -46,6 +47,7 @@ namespace SimpleInjector
             Requires.IsNotNull(parameter, nameof(parameter));
 
             this.Target = new InjectionTargetInfo(parameter);
+            this.ParentInfo = parentInfo;
         }
 
         internal InjectionConsumerInfo(Type serviceType, Type implementationType, PropertyInfo property)
@@ -72,6 +74,10 @@ namespace SimpleInjector
         /// <summary>Gets the implementation type of the consumer of the component that should be created.</summary>
         /// <value>The implementation type.</value>
         public Type ImplementationType { get; }
+        /// <summary>
+        /// 
+        /// </summary>
+        public InjectionConsumerInfo ParentInfo { get; }
 
         /// <summary>
         /// Gets the information about the consumer's target in which the dependency is injected. The target

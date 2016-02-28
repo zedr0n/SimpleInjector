@@ -446,9 +446,9 @@ namespace SimpleInjector
         }
 
         internal Expression BuildParameterExpression(Type serviceType, Type implementationType, 
-            ParameterInfo parameter)
+            ParameterInfo parameter, InjectionConsumerInfo consumerInfo = null)
         {
-            var consumer = new InjectionConsumerInfo(serviceType, implementationType, parameter);
+            var consumer = new InjectionConsumerInfo(serviceType, implementationType, parameter,consumerInfo);
 
             Expression expression = this.DependencyInjectionBehavior.BuildExpression(consumer);
 

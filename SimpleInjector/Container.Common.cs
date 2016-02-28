@@ -87,8 +87,8 @@ namespace SimpleInjector
         private readonly ConditionalHashSet<InstanceProducer> externalProducers =
             new ConditionalHashSet<InstanceProducer>();
 
-        private readonly Dictionary<Type, InstanceProducer> unregisteredConcreteTypeInstanceProducers =
-            new Dictionary<Type, InstanceProducer>();
+        private readonly Dictionary<TargetTypeInfo, InstanceProducer> unregisteredConcreteTypeInstanceProducers =
+            new Dictionary<TargetTypeInfo, InstanceProducer>();
 
         // Flag to signal that the container can't be altered by using any of the Register methods.
         private bool locked;

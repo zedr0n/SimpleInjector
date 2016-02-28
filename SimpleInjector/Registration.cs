@@ -424,8 +424,9 @@ namespace SimpleInjector
             {
                 var overriddenExpression = this.GetOverriddenParameterFor(parameter).PlaceHolder;
 
+                var consumerInfo = this.currentProducer?.Value?.ConsumerInfo;
                 var parameterExpression = overriddenExpression ?? 
-                    this.Container.Options.BuildParameterExpression(serviceType, implementationType, parameter);
+                    this.Container.Options.BuildParameterExpression(serviceType, implementationType, parameter,consumerInfo);
 
                 parameters.Add(parameterExpression);
             }

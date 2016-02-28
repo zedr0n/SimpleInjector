@@ -149,12 +149,32 @@ namespace SimpleInjector
             Predicate = (new CombinePredicate(Predicate, CheckHashCode)).GetPredicate();
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="serviceType"></param>
+        /// <param name="registration"></param>
+        /// <param name="consumerInfo"></param>
+        public InstanceProducer(Type serviceType, Registration registration, InjectionConsumerInfo consumerInfo)
+            : this(serviceType, registration, ShouldBeRegisteredAsAnExternalProducer(registration),consumerInfo)
+        {
+            Requires.ServiceIsAssignableFromImplementation(serviceType, registration.ImplementationType,
+                nameof(serviceType));
+
+            Predicate = (new CombinePredicate(Predicate, CheckHashCode)).GetPredicate();
+        }
+
         internal InstanceProducer(Type serviceType, Registration registration, Predicate<PredicateContext> predicate)
             : this(serviceType, registration)
         {
             this.Predicate = predicate ?? Always;
         }
 
+        internal InstanceProducer(Type serviceType, Registration registration, Predicate<PredicateContext> predicate, InjectionConsumerInfo consumerInfo)
+            : this(serviceType, registration,consumerInfo)
+        {
+            this.Predicate = predicate ?? Always;
+        }
         internal InstanceProducer(Type serviceType, Registration registration, bool registerExternalProducer)
         {
             Requires.IsNotNull(serviceType, nameof(serviceType));
@@ -176,6 +196,27 @@ namespace SimpleInjector
             this.instanceCreator = this.BuildAndReplaceInstanceCreatorAndCreateFirstInstance;
         }
 
+        internal InstanceProducer(Type serviceType, Registration registration, bool registerExternalProducer,InjectionConsumerInfo consumerInfo)
+        {
+            Requires.IsNotNull(serviceType, nameof(serviceType));
+            Requires.IsNotNull(registration, nameof(registration));
+            Requires.IsNotOpenGenericType(serviceType, nameof(serviceType));
+
+            this.ServiceType = serviceType;
+            this.Registration = registration;
+            this.validator = new CyclicDependencyValidator(registration.ImplementationType);
+            this.ConsumerInfo = consumerInfo;
+
+            this.lazyExpression = new Lazy<Expression>(this.BuildExpressionInternal);
+            this.initializationContext = new InitializationContext(this, registration);
+
+            if (registerExternalProducer)
+            {
+                registration.Container.RegisterExternalProducer(this);
+            }
+
+            this.instanceCreator = this.BuildAndReplaceInstanceCreatorAndCreateFirstInstance;
+        }
         /// <summary>
         /// Gets the <see cref="Lifestyle"/> for this registration. The returned lifestyle can differ from the
         /// lifestyle that is used during the registration. This can happen for instance when the registration
@@ -192,6 +233,11 @@ namespace SimpleInjector
         /// <summary>Gets the <see cref="Registration"/> instance for this instance.</summary>
         /// <value>The <see cref="Registration"/>.</value>
         public Registration Registration { get; private set; }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public InjectionConsumerInfo ConsumerInfo { get; private set; }
 
         internal Type ImplementationType => this.Registration.ImplementationType ?? this.ServiceType;
 

@@ -390,7 +390,8 @@ namespace SimpleInjector.Internals
                     // case multiple consumers to accidentally get the same implementation type, which
                     // using only the implementation type, would break when one implementation type could be
                     // used for multiple services (implements multiple closed interfaces).
-                    var key = new { context.ServiceType, context.ImplementationType };
+                    //var key = new { context.ServiceType, context.ImplementationType, ParentType = context.Consumer?.ParentInfo?.ServiceType };
+                    var key = new TargetTypeInfo(context, context.ServiceType);
 
                     if (!this.cache.TryGetValue(key, out producer))
                     {
@@ -402,7 +403,7 @@ namespace SimpleInjector.Internals
             }
 
             private InstanceProducer CreateNewProducerFor(PredicateContext context) =>
-                new InstanceProducer(context.ServiceType, this.GetRegistration(context), this.Predicate);
+                new InstanceProducer(context.ServiceType, this.GetRegistration(context), this.Predicate,context.Consumer);
 
             private Registration GetRegistration(PredicateContext context)
             {

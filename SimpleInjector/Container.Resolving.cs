@@ -48,8 +48,8 @@ namespace SimpleInjector
         // Cache for producers that are resolved as root type
         // PERF: The rootProducerCache uses a special equality comparer that does a quicker lookup of types.
         // PERF: This collection is updated by replacing the complete collection.
-        private Dictionary<Type, InstanceProducer> rootProducerCache =
-            new Dictionary<Type, InstanceProducer>(ReferenceEqualityComparer<Type>.Instance);
+        private Dictionary<TargetTypeInfo, InstanceProducer> rootProducerCache =
+            new Dictionary<TargetTypeInfo, InstanceProducer>();
 
         /// <summary>Gets an instance of the given <typeparamref name="TService"/>.</summary>
         /// <typeparam name="TService">Type of object requested.</typeparam>
@@ -62,7 +62,7 @@ namespace SimpleInjector
             InstanceProducer instanceProducer;
 
             // Performance optimization: This if check is a duplicate to save a call to GetInstanceForType.
-            if (!this.rootProducerCache.TryGetValue(typeof(TService), out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( typeof(TService),null), out instanceProducer))
             {
                 return (TService)this.GetInstanceForRootType<TService>();
             }
@@ -85,7 +85,7 @@ namespace SimpleInjector
 
             InstanceProducer instanceProducer;
 
-            if (!this.rootProducerCache.TryGetValue(serviceType, out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType,null), out instanceProducer))
             {
                 return this.GetInstanceForRootType(serviceType);
             }
@@ -135,7 +135,7 @@ namespace SimpleInjector
 
             InstanceProducer instanceProducer;
 
-            if (!this.rootProducerCache.TryGetValue(serviceType, out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType,null), out instanceProducer))
             {
                 instanceProducer = this.GetRegistration(serviceType);
             }
@@ -204,7 +204,7 @@ namespace SimpleInjector
 
             InstanceProducer producer;
 
-            if (!this.rootProducerCache.TryGetValue(serviceType, out producer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType, null), out producer))
             {
                 producer = this.GetRegistrationEvenIfInvalid(serviceType, InjectionConsumerInfo.Root, 
                     autoCreateConcreteTypes: true);
@@ -246,7 +246,7 @@ namespace SimpleInjector
 
             // This Func<T> is a bit ugly, but does save us a lot of duplicate code.
             Func<InstanceProducer> buildProducer =
-                () => this.BuildInstanceProducerForType(serviceType, autoCreateConcreteTypes);
+                () => this.BuildInstanceProducerForType(serviceType, autoCreateConcreteTypes,consumer);
 
             return this.GetInstanceProducerForType(serviceType, consumer, buildProducer);
         }
@@ -276,7 +276,7 @@ namespace SimpleInjector
         {
             // This generic overload allows retrieving types that are internal inside a sandbox.
             return this.GetInstanceProducerForType(typeof(TService), context,
-                this.BuildInstanceProducerForType<TService>);
+                () => this.BuildInstanceProducerForType<TService>(context));
         }
 
         private InstanceProducer GetInstanceProducerForType(Type serviceType, InjectionConsumerInfo context)
@@ -318,18 +318,18 @@ namespace SimpleInjector
             return instanceProducer.GetInstance();
         }
 
-        private InstanceProducer BuildInstanceProducerForType<TService>()
+        private InstanceProducer BuildInstanceProducerForType<TService>(InjectionConsumerInfo consumerInfo = null)
             where TService : class
         {
             return this.BuildInstanceProducerForType(typeof(TService),
-                this.TryBuildInstanceProducerForConcreteUnregisteredType<TService>);
+                () => this.TryBuildInstanceProducerForConcreteUnregisteredType<TService>(consumerInfo));
         }
 
         private InstanceProducer BuildInstanceProducerForType(Type serviceType, 
-            bool autoCreateConcreteTypes = true)
+            bool autoCreateConcreteTypes = true,InjectionConsumerInfo consumerInfo = null)
         {
             Func<InstanceProducer> tryBuildInstanceProducerForConcrete = autoCreateConcreteTypes
-                ? () => this.TryBuildInstanceProducerForConcreteUnregisteredType(serviceType)
+                ? () => this.TryBuildInstanceProducerForConcreteUnregisteredType(serviceType,consumerInfo)
                 : (Func<InstanceProducer>)(() => null);
 
             return this.BuildInstanceProducerForType(serviceType, tryBuildInstanceProducerForConcrete);
@@ -579,7 +579,7 @@ namespace SimpleInjector
             return new InstanceProducer(enumerableType, registration, registerExternalProducer: true);
         }
 
-        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType<TConcrete>()
+        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType<TConcrete>(InjectionConsumerInfo consumerInfo = null)
             where TConcrete : class
         {
             if (this.IsConcreteConstructableType(typeof(TConcrete)))
@@ -590,13 +590,13 @@ namespace SimpleInjector
                         this.SelectionBasedLifestyle.CreateRegistration<TConcrete, TConcrete>(this);
 
                     return BuildInstanceProducerForConcreteUnregisteredType(typeof(TConcrete), registration);
-                });
+                },consumerInfo);
             }
 
             return null;
         }
 
-        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType(Type concreteType)
+        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType(Type concreteType,InjectionConsumerInfo consumerInfo = null)
         {
             if (!concreteType.Info().IsValueType && !concreteType.Info().ContainsGenericParameters &&
                 this.IsConcreteConstructableType(concreteType))
@@ -606,15 +606,15 @@ namespace SimpleInjector
                     var registration =
                         this.SelectionBasedLifestyle.CreateRegistration(concreteType, concreteType, this);
 
-                    return BuildInstanceProducerForConcreteUnregisteredType(concreteType, registration);
-                });
+                    return BuildInstanceProducerForConcreteUnregisteredType(concreteType, registration, consumerInfo);
+                },consumerInfo);
             }
 
             return null;
         }
 
         private InstanceProducer GetOrBuildInstanceProducerForConcreteUnregisteredType(Type concreteType,
-            Func<InstanceProducer> instanceProducerBuilder)
+            Func<InstanceProducer> instanceProducerBuilder,InjectionConsumerInfo consumerInfo )
         {
             // We need to take a lock here to make sure that we never create multiple InstanceProducer
             // instances for the same concrete type, which is a problem when the LifestyleSelectionBehavior
@@ -626,11 +626,13 @@ namespace SimpleInjector
             {
                 InstanceProducer producer;
 
-                if (!this.unregisteredConcreteTypeInstanceProducers.TryGetValue(concreteType, out producer))
+                var targetInfo = new TargetTypeInfo(concreteType,consumerInfo);
+
+                if (!this.unregisteredConcreteTypeInstanceProducers.TryGetValue(targetInfo, out producer))
                 {
                     producer = instanceProducerBuilder.Invoke();
 
-                    this.unregisteredConcreteTypeInstanceProducers[concreteType] = producer;
+                    this.unregisteredConcreteTypeInstanceProducers[targetInfo] = producer;
                 }
 
                 return producer;
@@ -638,9 +640,9 @@ namespace SimpleInjector
         }
 
         private static InstanceProducer BuildInstanceProducerForConcreteUnregisteredType(Type concreteType,
-            Registration registration)
+            Registration registration, InjectionConsumerInfo consumerInfo = null)
         {
-            var producer = new InstanceProducer(concreteType, registration);
+            var producer = new InstanceProducer(concreteType, registration, consumerInfo);
 
             producer.EnsureTypeWillBeExplicitlyVerified();
 
@@ -669,7 +671,7 @@ namespace SimpleInjector
 
             // This registration might already exist if it was added made by another thread. That's why we
             // need to use the indexer, instead of Add.
-            snapshotCopy[serviceType] = rootProducer;
+            snapshotCopy[new TargetTypeInfo(serviceType,null)] = rootProducer;
 
             // Prevent the compiler, JIT, and processor to reorder these statements to prevent the instance
             // producer from being added after the snapshot has been made accessible to other threads.
