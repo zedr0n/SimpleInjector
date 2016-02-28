@@ -20,6 +20,8 @@
 */
 #endregion
 
+using SimpleInjector.Internals;
+
 namespace SimpleInjector
 {
     using System;
@@ -96,6 +98,11 @@ namespace SimpleInjector
             this.propertyBehavior = new DefaultPropertySelectionBehavior();
             this.lifestyleBehavior = new DefaultLifestyleSelectionBehavior(Lifestyle.Transient);
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public List<Type> SimpleTypes => TargetTypeInfo.SimpleType;
 
         /// <summary>
         /// Gets the container to which this <b>ContainerOptions</b> instance belongs to.

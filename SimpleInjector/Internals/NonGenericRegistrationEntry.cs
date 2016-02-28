@@ -56,7 +56,8 @@ namespace SimpleInjector.Internals
 
         public bool Equals(TargetTypeInfo other)
         {
-            return ImplementationType == other.ImplementationType && HashCode == other.HashCode && ServiceType == other.ServiceType;
+            return GetHashCode() == other.GetHashCode();
+            //return ImplementationType == other.ImplementationType && HashCode == other.HashCode && ServiceType == other.ServiceType;
             //ConsumerType == other.ConsumerType;
         }
 
@@ -64,8 +65,8 @@ namespace SimpleInjector.Internals
         {
             var hashCode = 0;
 
-            hashCode += ImplementationType?.Name.GetHashCode() ?? 0;
-            hashCode += ServiceType?.Name.GetHashCode() ?? 0;
+            hashCode += ImplementationType?.GetHashCode() ?? 0;
+            hashCode += ServiceType?.GetHashCode() ?? 0;
             hashCode += HashCode ?? 0;
 
             return hashCode;

@@ -300,7 +300,7 @@ namespace SimpleInjector.Internals
             private readonly Lifestyle lifestyle;
             private readonly Container container;
 
-            private readonly Dictionary<object, InstanceProducer> cache = new Dictionary<object, InstanceProducer>();
+            private readonly Dictionary<TargetTypeInfo, InstanceProducer> cache = new Dictionary<TargetTypeInfo, InstanceProducer>();
             private readonly Dictionary<Type, Registration> registrationCache = new Dictionary<Type, Registration>();
 
             internal OpenGenericToInstanceProducerProvider(Type serviceType, Type implementationType,
