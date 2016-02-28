@@ -271,7 +271,7 @@ namespace SimpleInjector.Internals
 
                 lock (this._cache)
                 {
-                    var targetInfo = new TargetTypeInfo(context,serviceType);
+                    var targetInfo = new TargetTypeInfo(context);
 
                     if (!this._cache.TryGetValue(targetInfo, out producer))
                     {
@@ -418,7 +418,7 @@ namespace SimpleInjector.Internals
                     // using only the implementation type, would break when one implementation type could be
                     // used for multiple services (implements multiple closed interfaces).
                     //var key = new { context.ServiceType, context.ImplementationType, ParentType = context.Consumer?.ParentInfo?.ServiceType };
-                    var key = new TargetTypeInfo(context, context.ServiceType);
+                    var key = new TargetTypeInfo(context);
 
                     if (!this.cache.TryGetValue(key, out producer))
                     {

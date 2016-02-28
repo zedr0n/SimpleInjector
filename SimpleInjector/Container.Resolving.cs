@@ -62,7 +62,7 @@ namespace SimpleInjector
             InstanceProducer instanceProducer;
 
             // Performance optimization: This if check is a duplicate to save a call to GetInstanceForType.
-            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( typeof(TService),null), out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( typeof(TService)), out instanceProducer))
             {
                 return (TService)this.GetInstanceForRootType<TService>();
             }
@@ -85,7 +85,7 @@ namespace SimpleInjector
 
             InstanceProducer instanceProducer;
 
-            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType,null), out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType ), out instanceProducer))
             {
                 return this.GetInstanceForRootType(serviceType);
             }
@@ -135,7 +135,7 @@ namespace SimpleInjector
 
             InstanceProducer instanceProducer;
 
-            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType,null), out instanceProducer))
+            if (!this.rootProducerCache.TryGetValue(new TargetTypeInfo( serviceType ), out instanceProducer))
             {
                 instanceProducer = this.GetRegistration(serviceType);
             }
@@ -626,7 +626,7 @@ namespace SimpleInjector
             {
                 InstanceProducer producer;
 
-                var targetInfo = new TargetTypeInfo(concreteType,consumerInfo);
+                var targetInfo = new TargetTypeInfo(concreteType,concreteType,consumerInfo);
 
                 if (!this.unregisteredConcreteTypeInstanceProducers.TryGetValue(targetInfo, out producer))
                 {

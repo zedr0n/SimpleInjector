@@ -25,49 +25,33 @@ namespace SimpleInjector.Internals
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Reflection;
 
     internal class TargetTypeInfo : IEquatable<TargetTypeInfo>
     {
         public Type ServiceType { get; }
-        public Type ImplementationType { get; set; }
+        public Type ImplementationType { get; }
         public int? HashCode { get; }
-        //public Type ConsumerType { get; }
+
+        public static List<Type> SimpleType = new List<Type>(); 
 
         public TargetTypeInfo(PredicateContext context)
+            : this(context.ServiceType, context.ImplementationType, context.Consumer)
         {
-            ImplementationType = context.ImplementationType;
-            HashCode = context.Consumer?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-            for (var consumer = context.Consumer?.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
-            {
-                HashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-                HashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
-            }
         }
 
-        public TargetTypeInfo(PredicateContext context, Type serviceType)
-            : this(context)
+        public TargetTypeInfo(Type serviceType, Type implementationType = null,InjectionConsumerInfo consumerInfo = null)
         {
             ServiceType = serviceType;
-        }
-
-        public TargetTypeInfo(Type implementationType,InjectionConsumerInfo consumerInfo)
-        {
             ImplementationType = implementationType;
-            if (consumerInfo == null)
-                HashCode = implementationType.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-            else
-            {
-                HashCode = consumerInfo.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-                for (var consumer = consumerInfo.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
-                {
-                    HashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-                    HashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
-                }
-                //HashCode = consumerInfo.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-            }
+            HashCode = consumerInfo?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            if (SimpleType.Any(x => x.IsAssignableFrom(ImplementationType)))
+                return;
 
-            //ConsumerType = consumerInfo?.ImplementationType;
+            for (var consumer = consumerInfo?.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
+            {
+                HashCode += consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+                HashCode += consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
+            }
         }
 
         public bool Equals(TargetTypeInfo other)
@@ -80,14 +64,9 @@ namespace SimpleInjector.Internals
         {
             var hashCode = 0;
 
-            if(ImplementationType != null)
-                hashCode = ImplementationType.Name.GetHashCode();
-
-            if (ServiceType != null)
-                hashCode ^= ServiceType.Name.GetHashCode();
-
-            if (HashCode != null)
-                hashCode ^= (int)HashCode;
+            hashCode += ImplementationType?.Name.GetHashCode() ?? 0;
+            hashCode += ServiceType?.Name.GetHashCode() ?? 0;
+            hashCode += HashCode ?? 0;
 
             return hashCode;
         }
