@@ -239,31 +239,58 @@ namespace SimpleInjector.Internals
 
         private sealed class ClosedToInstanceProducerProvider : IProducerProvider
         {
-            private readonly InstanceProducer producer;
+            private readonly InstanceProducer _producer;
+            private readonly Dictionary<TargetTypeInfo, InstanceProducer> _cache = new Dictionary<TargetTypeInfo, InstanceProducer>();
 
             public ClosedToInstanceProducerProvider(InstanceProducer producer)
             {
-                this.producer = producer;
+                this._producer = producer;
             }
 
-            public bool IsConditional => this.producer.IsConditional;
+            public bool IsConditional => this._producer.IsConditional;
             public bool AppliesToAllClosedServiceTypes => false;
-            public Type ServiceType => this.producer.ServiceType;
-            public Type ImplementationType => this.producer.Registration.ImplementationType;
-            public IEnumerable<InstanceProducer> CurrentProducers => Enumerable.Repeat(this.producer, 1);
-            public bool MatchesServiceType(Type serviceType) => serviceType == this.producer.ServiceType;
+            public Type ServiceType => this._producer.ServiceType;
+            public Type ImplementationType => this._producer.Registration.ImplementationType;
+            public IEnumerable<InstanceProducer> CurrentProducers => Enumerable.Repeat(this._producer, 1);
+            public bool MatchesServiceType(Type serviceType) => serviceType == this._producer.ServiceType;
 
             public bool OverlapsWith(Type closedServiceType) =>
-                !this.producer.IsConditional && this.producer.ServiceType == closedServiceType;
+                !this._producer.IsConditional && this._producer.ServiceType == closedServiceType;
 
             public InstanceProducer TryGetProducer(Type serviceType, InjectionConsumerInfo consumer,
-                bool handled) =>
-                this.MatchesServiceType(serviceType) && this.MatchesPredicate(consumer, handled)
-                    ? this.producer
-                    : null;
+                bool handled)
+            {
+                var shouldBuildProducer = this.MatchesServiceType(serviceType) &&
+                                          this.MatchesPredicate(consumer, handled);
+
+                if (!shouldBuildProducer)
+                    return null;
+
+                var context = new PredicateContext(_producer, consumer, handled);
+                var producer = _producer;
+
+                lock (this._cache)
+                {
+                    var targetInfo = new TargetTypeInfo(context,serviceType);
+
+                    if (!this._cache.TryGetValue(targetInfo, out producer))
+                    {
+                        this._cache[targetInfo] = producer = this.CreateNewProducerFor(context);
+                    }
+
+                }
+                return producer;
+            }
+
+            private InstanceProducer CreateNewProducerFor(PredicateContext context) =>
+                new InstanceProducer(
+                    _producer.ServiceType,
+                    _producer.Registration,
+                    _producer.Predicate,
+                    context.Consumer);
 
             private bool MatchesPredicate(InjectionConsumerInfo consumer, bool handled) =>
-                this.producer.Predicate(new PredicateContext(this.producer, consumer, handled));
+                this._producer.Predicate(new PredicateContext(this._producer, consumer, handled));
         }
 
         private sealed class OpenGenericToInstanceProducerProvider : IProducerProvider

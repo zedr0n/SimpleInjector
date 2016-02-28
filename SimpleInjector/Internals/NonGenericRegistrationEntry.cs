@@ -283,19 +283,43 @@ namespace SimpleInjector.Internals
 
         private sealed class SingleInstanceProducerProvider : IProducerProvider
         {
-            private readonly InstanceProducer producer;
+            private readonly Dictionary<TargetTypeInfo, InstanceProducer> cache = new Dictionary<TargetTypeInfo, InstanceProducer>();
+            private readonly InstanceProducer _producer;
 
             public SingleInstanceProducerProvider(InstanceProducer producer)
             {
-                this.producer = producer;
+                _producer = producer;
             }
 
-            public IEnumerable<InstanceProducer> CurrentProducers => Enumerable.Repeat(this.producer, 1);
+            public IEnumerable<InstanceProducer> CurrentProducers => Enumerable.Repeat(this._producer, 1);
 
-            public InstanceProducer TryGetProducer(InjectionConsumerInfo consumer, bool handled) =>
-                this.producer.Predicate(new PredicateContext(this.producer, consumer, handled))
-                    ? this.producer
+            public InstanceProducer TryGetProducer(InjectionConsumerInfo consumer, bool handled)
+            {
+                var context = new PredicateContext(_producer, consumer, handled);
+
+                InstanceProducer producer = null;
+
+                lock (this.cache)
+                {
+                    var targetInfo = new TargetTypeInfo(context);
+
+                    if (!this.cache.TryGetValue(targetInfo, out producer))
+                    {
+                        this.cache[targetInfo] = producer = this.CreateNewProducerFor(context);
+                    }
+                }
+
+                return producer.Predicate(new PredicateContext(producer, consumer, handled))
+                    ? producer
                     : null;
+            }
+
+            private InstanceProducer CreateNewProducerFor(PredicateContext context) =>
+                new InstanceProducer(
+                    _producer.ServiceType,
+                    _producer.Registration,
+                    _producer.Predicate,
+                    context.Consumer);
         }
         private class ImplementationTypeFactoryInstanceProducerProvider : IProducerProvider
         {

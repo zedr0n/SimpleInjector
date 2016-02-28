@@ -110,14 +110,19 @@ namespace SimpleInjector
 
         private bool CheckHashCode(PredicateContext context)
         {
-            if (context.Consumer == null)
+            return true;
+            /*if (context.Consumer == null)
                 return true;
 
-            var target = context.Consumer.Target.Member;
-            var attributes = target?.GetCustomAttributes(true);
-            var hashCode = attributes?.Sum(attr => attr.GetHashCode());
+            var hashCode = context.Consumer.Target.Member.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            for (var consumer = context.Consumer.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
+            {
+                hashCode ^= consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+                hashCode ^= consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
+            }
+
             HashCode = HashCode ?? hashCode;
-            return HashCode == hashCode;
+            return HashCode == hashCode;*/
         }
 
         /// <summary>
