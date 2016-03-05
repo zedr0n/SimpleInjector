@@ -1,7 +1,7 @@
 @ECHO OFF
 
-set version=3.1.2
-set prereleasePostfix=
+set version=3.1.3
+set prereleasePostfix=-gamma7
 set buildNumber=0 
 
 
@@ -16,15 +16,16 @@ set version_Integration_WebApi=%version_Core%
 set version_Extensions_LifetimeScoping=%version_Core%
 set version_Extensions_ExecutionContextScoping=%version_Core%
 
-call "%PROGRAMFILES%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat"
+REM call "%PROGRAMFILES%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat"
 
-set msbuild="%PROGRAMFILES%\MSBuild\14.0\Bin\MSBuild.exe"
+set msbuild="msbuild.exe"
+REM "%PROGRAMFILES%\MSBuild\14.0\Bin\MSBuild.exe"
 set buildToolsPath=BuildTools
 set nugetTemplatePath=%buildToolsPath%\NuGet
 set ilmerge=%buildToolsPath%\ILMerge.exe
 set replace=%buildToolsPath%\replace.exe
 set compress=CScript %buildToolsPath%\zip.vbs
-set configuration=Release
+set configuration=Debug
 set defineConstantsNet=PUBLISH
 set defineConstantsPcl=PUBLISH;PCL
 set targetPath=bin
@@ -78,9 +79,9 @@ mkdir %targetPathCoreClr%
 %msbuild% "SimpleInjector.NET\SimpleInjector.NET.csproj" /nologo /p:%net40ClientProfile% /p:VersionNumber=%numeric_version_Core%
 %msbuild% "SimpleInjector.Packaging\SimpleInjector.Packaging.csproj" /nologo /p:%net40ClientProfile% /p:VersionNumber=%numeric_version_Packaging%
 %msbuild% "SimpleInjector.Extensions.LifetimeScoping.NET\SimpleInjector.Extensions.LifetimeScoping.NET.csproj" /nologo /p:%net40ClientProfile% /p:VersionNumber=%numeric_version_Extensions_LifetimeScoping%
-%msbuild% "SimpleInjector.Integration.Web\SimpleInjector.Integration.Web.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Web%
-%msbuild% "SimpleInjector.Integration.Web.Mvc\SimpleInjector.Integration.Web.Mvc.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Mvc%
-%msbuild% "SimpleInjector.Integration.Wcf\SimpleInjector.Integration.Wcf.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Wcf%
+REM %msbuild% "SimpleInjector.Integration.Web\SimpleInjector.Integration.Web.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Web%
+rem %msbuild% "SimpleInjector.Integration.Web.Mvc\SimpleInjector.Integration.Web.Mvc.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Mvc%
+rem %msbuild% "SimpleInjector.Integration.Wcf\SimpleInjector.Integration.Wcf.csproj" /nologo /p:%net40FullProfile% /p:VersionNumber=%numeric_version_Integration_Wcf%
 
 ren %targetPathNet%\SimpleInjector.dll SimpleInjector_40.dll
 ren %targetPathNet%\SimpleInjector.xml SimpleInjector_40.xml
@@ -89,7 +90,7 @@ ren %targetPathNet%\SimpleInjector.xml SimpleInjector_40.xml
 
 %msbuild% "SimpleInjector.Extensions.ExecutionContextScoping.NET\SimpleInjector.Extensions.ExecutionContextScoping.NET.csproj" /nologo /p:%net45Profile% /p:VersionNumber=%numeric_version_Extensions_ExecutionContextScoping%
 
-%msbuild% "SimpleInjector.Integration.WebApi\SimpleInjector.Integration.WebApi.csproj" /nologo /p:%net45Profile% /p:VersionNumber=%numeric_version_Integration_WebApi%
+rem %msbuild% "SimpleInjector.Integration.WebApi\SimpleInjector.Integration.WebApi.csproj" /nologo /p:%net45Profile% /p:VersionNumber=%numeric_version_Integration_WebApi%
 
 %msbuild% "SimpleInjector.PCL\SimpleInjector.PCL.csproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsPcl%" /p:VersionNumber=%numeric_version_Core%
 %msbuild% "SimpleInjector.Extensions.LifetimeScoping.PCL\SimpleInjector.Extensions.LifetimeScoping.PCL.csproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsPcl%" /p:VersionNumber=%numeric_version_Extensions_LifetimeScoping%
@@ -112,7 +113,7 @@ copy artifacts\bin\SimpleInjector.Extensions.ExecutionContextScoping\Release\dot
 
 echo BUILD DOCUMENTATION
 
-%msbuild% "SimpleInjector.Documentation\SimpleInjector.Documentation.shfbproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsNet%"
+REM %msbuild% "SimpleInjector.Documentation\SimpleInjector.Documentation.shfbproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsNet%"
 
 
 mkdir Releases\v%named_version%
@@ -227,6 +228,7 @@ copy %targetPathPcl%\SimpleInjector.dll "Releases\temp\lib\dotnet\SimpleInjector
 copy %targetPathPcl%\SimpleInjector.xml "Releases\temp\lib\dotnet\SimpleInjector.xml"
 copy %targetPathPcl%\SimpleInjector.dll "Releases\temp\lib\portable-net4+sl4+wp8+win8+wpa81\SimpleInjector.dll"
 copy %targetPathPcl%\SimpleInjector.xml "Releases\temp\lib\portable-net4+sl4+wp8+win8+wpa81\SimpleInjector.xml"
+copy %targetPathPcl%\SimpleInjector.pdb "Releases\temp\lib\portable-net4+sl4+wp8+win8+wpa81\SimpleInjector.pdb"
 copy %targetPathCoreClr%\SimpleInjector.dll Releases\temp\lib\dotnet\SimpleInjector.dll
 copy %targetPathCoreClr%\SimpleInjector.xml Releases\temp\lib\dotnet\SimpleInjector.xml
 %replace% /source:Releases\temp\SimpleInjector.nuspec {version} %named_version_Core%
