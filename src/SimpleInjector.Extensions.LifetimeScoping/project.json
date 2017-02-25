@@ -1,0 +1,18 @@
+{
+  "version": "3.2.0.0 ",
+  "buildOptions": {
+    "keyFile": "../SimpleInjector.snk",
+    "xmlDoc": true,
+    "define": [ "NETSTANDARD", "PCL" ]
+  },
+
+  "dependencies": {
+    "NETStandard.Library": "1.6.0",
+    "SimpleInjector": { "target": "project" }
+  },
+  "frameworks": {
+    "netstandard1.0": {
+      "imports": "portable-net452+win81"
+    }
+  }
+}
