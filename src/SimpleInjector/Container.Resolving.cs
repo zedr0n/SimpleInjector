@@ -598,7 +598,7 @@ namespace SimpleInjector
             return null;
         }
 
-        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType(Type type)
+        private InstanceProducer TryBuildInstanceProducerForConcreteUnregisteredType(Type type, InjectionConsumerInfo consumerInfo = null)
         {
             if (type.IsAbstract() || type.IsValueType() || type.ContainsGenericParameters() || 
                 !this.IsConcreteConstructableType(type))
@@ -610,7 +610,7 @@ namespace SimpleInjector
             {
                 var registration = this.SelectionBasedLifestyle.CreateRegistration(type, type, this);
 
-                    return BuildInstanceProducerForConcreteUnregisteredType(concreteType, registration, consumerInfo);
+                    return BuildInstanceProducerForConcreteUnregisteredType(type, registration, consumerInfo);
                 },consumerInfo);
         }
 

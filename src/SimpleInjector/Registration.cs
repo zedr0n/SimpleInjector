@@ -424,7 +424,7 @@ namespace SimpleInjector
 
             foreach (ParameterInfo parameter in constructor.GetParameters())
             {
-                var consumerInfo = this.currentProducer?.Value?.ConsumerInfo ?? new InjectionConsumerInfo(serviceType, implementationType, parameter);
+                var consumer = this.currentProducer?.Value?.ConsumerInfo ?? new InjectionConsumerInfo(serviceType, implementationType, parameter);
                 Expression constructorParameter = this.BuildConstructorParameterFor(consumer);
                 parameters.Add(constructorParameter);
             }

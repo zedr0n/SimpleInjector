@@ -284,7 +284,7 @@ namespace SimpleInjector.Internals
 
             public bool OverlapsWith(InstanceProducer producerToCheck) =>
                 (this._producer.IsUnconditional || producerToCheck.IsUnconditional) &&
-                !this._producer.IsConditional && this.producer.ServiceType == closedServiceType;
+                !this._producer.IsConditional && this._producer.ServiceType == producerToCheck.ServiceType;
 
             public InstanceProducer TryGetProducer(Type serviceType, InjectionConsumerInfo consumer,
                 bool handled)

@@ -16,9 +16,9 @@ set version_Integration_WebApi=%version_Core%
 set version_Extensions_LifetimeScoping=%version_Core%
 set version_Extensions_ExecutionContextScoping=%version_Core%
 
-call "%PROGRAMFILES%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat"
+call "%PROGRAMFILES(x86)%\Microsoft Visual Studio 14.0\Common7\Tools\vsvars32.bat"
 
-set msbuild="%PROGRAMFILES%\MSBuild\14.0\Bin\MSBuild.exe"
+set msbuild="%PROGRAMFILES(x86)%\MSBuild\14.0\Bin\MSBuild.exe"
 set buildToolsPath=BuildTools
 set nugetTemplatePath=%buildToolsPath%\NuGet
 set ilmerge=%buildToolsPath%\ILMerge.exe
