@@ -20,6 +20,8 @@
 */
 #endregion
 
+using System.Reflection;
+
 namespace SimpleInjector.Internals
 {
     using System;
@@ -43,14 +45,14 @@ namespace SimpleInjector.Internals
         {
             ServiceType = serviceType;
             ImplementationType = implementationType;
-            HashCode = consumerInfo?.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
+            HashCode = consumerInfo?.Target?.Member?.CustomAttributes?.Sum(attr => attr.GetHashCode());
             if (SimpleType.Any(x => x.IsAssignableFrom(ImplementationType)))
                 return;
 
             for (var consumer = consumerInfo?.ParentInfo; consumer != null; consumer = consumer.ParentInfo)
             {
-                HashCode += consumer.Target?.Member?.GetCustomAttributes(true)?.Sum(attr => attr.GetHashCode());
-                HashCode += consumer.ImplementationType.GetCustomAttributes(true).Sum(attr => attr.GetHashCode());
+                HashCode += consumer.Target?.Member?.CustomAttributes?.Sum(attr => attr.GetHashCode());
+                HashCode += consumer.ImplementationType.GetTypeInfo().CustomAttributes.Sum(attr => attr.GetHashCode());
             }
         }
 

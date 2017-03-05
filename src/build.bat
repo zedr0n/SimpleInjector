@@ -1,7 +1,7 @@
 @ECHO OFF
 
-set version=3.2.0
-set prereleasePostfix=
+set version=3.2.1
+set prereleasePostfix=-hash2
 set buildNumber=0 
 set copyrightYear=2016
 
