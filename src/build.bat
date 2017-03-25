@@ -1,7 +1,7 @@
 @ECHO OFF
 
 set version=3.2.1
-set prereleasePostfix=-hash2
+set prereleasePostfix=-hash6d
 set buildNumber=0 
 set copyrightYear=2016
 
@@ -24,7 +24,7 @@ set nugetTemplatePath=%buildToolsPath%\NuGet
 set ilmerge=%buildToolsPath%\ILMerge.exe
 set replace=%buildToolsPath%\replace.exe
 set compress=CScript %buildToolsPath%\zip.vbs
-set configuration=Release
+set configuration=Debug
 set defineConstantsNet=PUBLISH
 set defineConstantsPcl=PUBLISH;PCL
 set targetPath=bin
@@ -95,10 +95,11 @@ ren %targetPathNet%\SimpleInjector.xml SimpleInjector_40.xml
 %msbuild% "SimpleInjector.PCL\SimpleInjector.PCL.csproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsPcl%" /p:VersionNumber=%numeric_version_Core%
 %msbuild% "SimpleInjector.Extensions.LifetimeScoping.PCL\SimpleInjector.Extensions.LifetimeScoping.PCL.csproj" /nologo /p:Configuration=%configuration% /p:DefineConstants="%defineConstantsPcl%" /p:VersionNumber=%numeric_version_Extensions_LifetimeScoping%
 
-%replace% /source:SimpleInjector\project.json /line """version"": " "  ""version"": ""%named_version_Core%""," 
-%msbuild% "SimpleInjector\SimpleInjector.xproj" /nologo
-copy SimpleInjector\bin\Release\netstandard1.0\SimpleInjector.dll %targetPathCoreClr%\SimpleInjector.dll
-copy SimpleInjector\bin\Release\netstandard1.0\SimpleInjector.xml %targetPathCoreClr%\SimpleInjector.xml
+%replace% /source:SimpleInjector\project.json  /line """version"": " "  ""version"": ""%named_version_Core%""," 
+%msbuild% "SimpleInjector\SimpleInjector.xproj"/p:Configuration=%configuration% /nologo
+copy SimpleInjector\bin\%Configuration%\netstandard1.0\SimpleInjector.dll %targetPathCoreClr%\SimpleInjector.dll
+copy SimpleInjector\bin\%Configuration%\netstandard1.0\SimpleInjector.pdb %targetPathCoreClr%\SimpleInjector.pdb
+copy SimpleInjector\bin\%Configuration%\netstandard1.0\SimpleInjector.xml %targetPathCoreClr%\SimpleInjector.xml
 
 %replace% /source:SimpleInjector.Extensions.LifetimeScoping\project.json /line """version"": " "  ""version"": ""%numeric_version_Extensions_LifetimeScoping%""," 
 %msbuild% "SimpleInjector.Extensions.LifetimeScoping\SimpleInjector.Extensions.LifetimeScoping.xproj" /nologo
@@ -229,6 +230,7 @@ copy %targetPathNet%\SimpleInjector_40.xml Releases\temp\lib\net40-client\Simple
 copy %targetPathPcl%\SimpleInjector.dll "Releases\temp\lib\portable-net4+sl4+wp8+win8+wpa81\SimpleInjector.dll"
 copy %targetPathPcl%\SimpleInjector.xml "Releases\temp\lib\portable-net4+sl4+wp8+win8+wpa81\SimpleInjector.xml"
 copy %targetPathCoreClr%\SimpleInjector.dll Releases\temp\lib\netstandard1.0\SimpleInjector.dll
+copy %targetPathCoreClr%\SimpleInjector.pdb Releases\temp\lib\netstandard1.0\SimpleInjector.pdb
 copy %targetPathCoreClr%\SimpleInjector.xml Releases\temp\lib\netstandard1.0\SimpleInjector.xml
 %replace% /source:Releases\temp\SimpleInjector.nuspec {version} %named_version_Core%
 %replace% /source:Releases\temp\SimpleInjector.nuspec {year} %copyrightYear%
